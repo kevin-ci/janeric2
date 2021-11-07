@@ -54,6 +54,58 @@ def cache_checkout_data(request):
         return HttpResponse(content=e, status=400)
 
 
+def checkout_shipping(request):
+
+    #current_cart = cart_contents(request)
+    cart = request.session.get('cart', {})
+    if not cart:
+        messages.error(request, "There's nothing in your bag at the moment")
+        return redirect(reverse('products'))
+
+    current_cart = cart_contents(request)
+    #total = current_cart['grand_total']
+
+    # Attempt to prefill the form with any info
+    # the user maintains in their profile
+    if request.user.is_authenticated:
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+            marketing_value = profile.marketing
+            full_name = profile.defaultship_full_name
+            order_form = OrderForm(initial={
+                'ship_full_name': profile.defaultship_full_name,
+                'email': profile.user.email,
+                'ship_street_address1': profile.defaultship_street_address1,
+                'ship_street_address2': profile.defaultship_street_address2,
+                'ship_city': profile.defaultship_city,
+                'ship_state': profile.defaultship_state,
+                'ship_zipcode': profile.defaultship_zipcode,
+                'ship_phone_number': profile.defaultship_phone_number,
+            })
+        except UserProfile.DoesNotExist:
+            order_form = OrderForm()
+    else:
+        order_form = OrderForm()
+        marketing_value = "false"
+        full_name = ""
+
+    ship_state = USStateSelect()
+    ship_zipcode = USZipCodeField()
+
+    template = 'checkout/checkout_shipping.html'
+    context = {
+        'order_form': order_form,
+        'ship_state': ship_state,
+        'bill_state': bill_state,
+        'ship_zipcode': ship_zipcode,
+        'marketing': marketing_value,
+        'full_name': full_name,
+    }
+
+    return render(request, template, context)
+
+
+#@require_POST
 def checkout(request):
     stripe_public_key = settings.STRIPE_PUBLIC_KEY
     stripe_secret_key = settings.STRIPE_SECRET_KEY

@@ -41,5 +41,27 @@ $(document).ready(function() {
     $('#id_bill_state').on('change', function() {
         $('#id_bill_state').css('color', '#47646f'); 
     });
+
+    form.addEventListener('submit', function(ev) {
+        ev.preventDefault();
+        card.update({ 'disabled': true});
+        $('#submit-button').attr('disabled', true);
+        const caTax = localStorage.getItem("ca");
+        $('#payment-form').fadeToggle(100);
+        $('#loading-overlay').fadeToggle(100);
+    
+       var saveInfo = Boolean($('#id-save-info').prop('checked'));
+       var marketingBox = Boolean($('#id_marketing').prop('checked'));
+        // From using {% csrf_token %} in the form
+        var csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
+        var postData = {
+            'csrfmiddlewaretoken': csrfToken,
+            'client_secret': clientSecret,
+            'save_info': saveInfo,
+            'marketing': marketingBox,
+        };
+        var url = '/checkout/cache_checkout_data/';
+      
+        $.post(url, postData).done(function () {
 });
 
