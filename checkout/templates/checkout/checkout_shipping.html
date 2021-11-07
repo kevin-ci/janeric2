@@ -13,7 +13,7 @@
     <script defer src="{% static 'checkout/js/checkout.js' %}"></script> 
 {% endblock %}
 
-{% block extra_title %}| Checkout{% endblock %}
+{% block extra_title %}| Checkout Shipping{% endblock %}
 
 {% block page_header %}
 <div class="container header-container">
@@ -106,7 +106,7 @@
                                 <strong>Payment</strong>
                             </li>
                         </ul>
-                        <form action="{% url 'checkout' %}" method="POST" id="payment-form">
+                        <form method="POST" id="shipping-form" action="">
                             {% csrf_token %}
                                 <ul class="stepper linear">
                                     <li id="contact" class="step active">
@@ -115,11 +115,11 @@
                                             <div class="row">
                                                 <div class="md-form col-12 ml-auto">
                                                 <fieldset class="rounded px-3 mb-5">
-                                                    {{ order_form.email | as_crispy_field }}
+                                                    {{ shipping_form.email | as_crispy_field }}
                                                     {% if user.is_authenticated %}
                                                         {% if not marketing %}
                                                             <div class="form-check text-left">
-                                                                {{ order_form.marketing }}
+                                                                {{ shipping_form.marketing }}
                                                                 <label for="id_marketing" class="form-check-label">Send me special offers</label>  
                                                             </div>
                                                         {% endif %}
@@ -144,14 +144,14 @@
                                             <div class="row">
                                                 <div class="md-form col-12 ml-auto">
                                                 <fieldset class="rounded px-3 mb-5">
-                                                    {{ order_form.ship_full_name |  as_crispy_field }}
-                                                    {{ order_form.ship_comp_name | as_crispy_field }}
-                                                    {{ order_form.ship_street_address1 | as_crispy_field }}
-                                                    {{ order_form.ship_street_address2 | as_crispy_field }}
-                                                    {{ order_form.ship_city | as_crispy_field }}
-                                                    {{ order_form.ship_state | as_crispy_field }}
-                                                    {{ order_form.ship_zipcode | as_crispy_field }}
-                                                    {{ order_form.ship_phone_number | as_crispy_field }}
+                                                    {{ shipping_form.ship_full_name |  as_crispy_field }}
+                                                    {{ shipping_form.ship_comp_name | as_crispy_field }}
+                                                    {{ shipping_form.ship_street_address1 | as_crispy_field }}
+                                                    {{ shipping_form.ship_street_address2 | as_crispy_field }}
+                                                    {{ shipping_form.ship_city | as_crispy_field }}
+                                                    {{ shipping_form.ship_state | as_crispy_field }}
+                                                    {{ shipping_form.ship_zipcode | as_crispy_field }}
+                                                    {{ shipping_form.ship_phone_number | as_crispy_field }}
                                                     
                                                     {% if user.is_authenticated %}
                                                         {% if not full_name %}

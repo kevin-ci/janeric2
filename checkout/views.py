@@ -96,7 +96,6 @@ def checkout_shipping(request):
     context = {
         'shipping_form': shipping_form,
         'ship_state': ship_state,
-        'bill_state': bill_state,
         'ship_zipcode': ship_zipcode,
         'marketing': marketing_value,
         'full_name': full_name,
