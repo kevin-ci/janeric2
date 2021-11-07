@@ -4,7 +4,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.conf import settings
 
-from .forms import USZipCodeField, USStateSelect, OrderForm
+from .forms import USZipCodeField, USStateSelect, OrderForm, ShippingForm
 from .models import Order, OrderLineItem
 
 from products.models import Product
@@ -59,7 +59,7 @@ def checkout_shipping(request):
     #current_cart = cart_contents(request)
     cart = request.session.get('cart', {})
     if not cart:
-        messages.error(request, "There's nothing in your bag at the moment")
+        messages.error(request, "There's nothing in your cart at the moment")
         return redirect(reverse('products'))
 
     current_cart = cart_contents(request)
@@ -72,7 +72,7 @@ def checkout_shipping(request):
             profile = UserProfile.objects.get(user=request.user)
             marketing_value = profile.marketing
             full_name = profile.defaultship_full_name
-            order_form = OrderForm(initial={
+            shipping_form = ShippingForm(initial={
                 'ship_full_name': profile.defaultship_full_name,
                 'email': profile.user.email,
                 'ship_street_address1': profile.defaultship_street_address1,
@@ -83,9 +83,9 @@ def checkout_shipping(request):
                 'ship_phone_number': profile.defaultship_phone_number,
             })
         except UserProfile.DoesNotExist:
-            order_form = OrderForm()
+            shipping_form = ShippingForm()
     else:
-        order_form = OrderForm()
+        shipping_form = ShippingForm()
         marketing_value = "false"
         full_name = ""
 
@@ -94,7 +94,7 @@ def checkout_shipping(request):
 
     template = 'checkout/checkout_shipping.html'
     context = {
-        'order_form': order_form,
+        'shipping_form': shipping_form,
         'ship_state': ship_state,
         'bill_state': bill_state,
         'ship_zipcode': ship_zipcode,
@@ -158,7 +158,7 @@ def checkout(request):
                         order_line_item.save()
                 except Product.DoesNotExist:
                     messages.error(request, (
-                        "One of the products in your bag wasn't found in our database. \
+                        "One of the products in your cart wasn't found in our database. \
                         Please call us for assistance!")
                     )
                     order.delete()
@@ -175,7 +175,7 @@ def checkout(request):
 
     cart = request.session.get('cart', {})
     if not cart:
-        messages.error(request, "There's nothing in your bag at the moment")
+        messages.error(request, "There's nothing in your cart at the moment")
         return redirect(reverse('products'))
 
     # Reset ca to default false when first load checkout page
