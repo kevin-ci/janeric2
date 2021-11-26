@@ -106,7 +106,7 @@
                                 <strong>Payment</strong>
                             </li>
                         </ul>
-                        <form method="POST" id="shipping-form" action="">
+                        <form method="POST" id="shipping-form" action="{% url 'checkout' %}">
                             {% csrf_token %}
                                 <ul class="stepper linear">
                                     <li id="contact" class="step active">
@@ -178,13 +178,6 @@
             </div>
         </div>  
     </div>
-    <div id="loading-overlay">
-        <h1 class="text-light logo-font loading-spinner">
-            <span class="icon">
-                <i class="fas fa-3x fa-sync-alt fa-spin"></i>
-            </span>
-        </h1>
-    </div> 
 </main>
 {% endblock%}
 

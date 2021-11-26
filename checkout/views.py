@@ -65,6 +65,10 @@ def checkout_shipping(request):
     current_cart = cart_contents(request)
     #total = current_cart['grand_total']
 
+    if request.method == 'POST':
+        
+
+
     # Attempt to prefill the form with any info
     # the user maintains in their profile
     if request.user.is_authenticated:
@@ -111,133 +115,142 @@ def checkout(request):
     # Obtain contents of cart.context.py
     current_cart = cart_contents(request)
     ca = request.COOKIES.get('ca')
+
     if request.method == 'POST':
-        cart = request.session.get('cart', {})
-        form_data = {
-            'ship_full_name': request.POST['ship_full_name'],
-            'email': request.POST['email'],
-            'ship_comp_name': request.POST['ship_comp_name'],
-            'ship_phone_number': request.POST['ship_phone_number'],
-            'ship_street_address1': request.POST['ship_street_address1'],
-            'ship_street_address2': request.POST['ship_street_address2'],
-            'ship_city': request.POST['ship_city'],
-            'ship_state': request.POST['ship_state'],
-            'ship_zipcode': request.POST['ship_zipcode'],
-            'bill_full_name': request.POST['bill_full_name'],
-            'bill_phone_number': request.POST['bill_phone_number'],
-            'bill_street_address1': request.POST['bill_street_address1'],
-            'bill_street_address2': request.POST['bill_street_address2'],
-            'bill_city': request.POST['bill_city'],
-            'bill_state': request.POST['bill_state'],
-            'bill_zipcode': request.POST['bill_zipcode'],
-        }
+        if not 'action' in request.POST:
+            cart = request.session.get('cart', {})
+            form_data = {
+                'ship_full_name': request.POST['ship_full_name'],
+                'email': request.POST['email'],
+                'ship_comp_name': request.POST['ship_comp_name'],
+                'ship_phone_number': request.POST['ship_phone_number'],
+                'ship_street_address1': request.POST['ship_street_address1'],
+                'ship_street_address2': request.POST['ship_street_address2'],
+                'ship_city': request.POST['ship_city'],
+                'ship_state': request.POST['ship_state'],
+                'ship_zipcode': request.POST['ship_zipcode'],
+                'bill_full_name': request.POST['bill_full_name'],
+                'bill_phone_number': request.POST['bill_phone_number'],
+                'bill_street_address1': request.POST['bill_street_address1'],
+                'bill_street_address2': request.POST['bill_street_address2'],
+                'bill_city': request.POST['bill_city'],
+                'bill_state': request.POST['bill_state'],
+                'bill_zipcode': request.POST['bill_zipcode'],
+            }
 
-        order_form = OrderForm(form_data)
-        if order_form.is_valid():
-            order = order_form.save(commit=False)
-            pid = request.POST.get('client_secret').split('_secret')[0]
-            order.stripe_pid = pid
-            order.original_cart = json.dumps(cart)
-            if ca == "true":
-                order.ca_sales_tax = current_cart['ca_tax']
-                order.grand_total = current_cart['grand_total_ca']
-            else:
-                order.ca_sales_tax = 0
-                order.grand_total = current_cart['grand_total']
-            order.save()
-            for product_id, item_data in cart.items():
-                try:
-                    product = Product.objects.get(id=product_id)
-                    if isinstance(item_data, int):
-                        order_line_item = OrderLineItem(
-                            order=order,
-                            product=product,
-                            quantity=item_data,
+            order_form = OrderForm(form_data)
+            if order_form.is_valid():
+                order = order_form.save(commit=False)
+                pid = request.POST.get('client_secret').split('_secret')[0]
+                order.stripe_pid = pid
+                order.original_cart = json.dumps(cart)
+                if ca == "true":
+                    order.ca_sales_tax = current_cart['ca_tax']
+                    order.grand_total = current_cart['grand_total_ca']
+                else:
+                    order.ca_sales_tax = 0
+                    order.grand_total = current_cart['grand_total']
+                order.save()
+                for product_id, item_data in cart.items():
+                    try:
+                        product = Product.objects.get(id=product_id)
+                        if isinstance(item_data, int):
+                            order_line_item = OrderLineItem(
+                                order=order,
+                                product=product,
+                                quantity=item_data,
+                            )
+                            order_line_item.save()
+                    except Product.DoesNotExist:
+                        messages.error(request, (
+                            "One of the products in your cart wasn't found in our database. \
+                            Please call us for assistance!")
                         )
-                        order_line_item.save()
-                except Product.DoesNotExist:
-                    messages.error(request, (
-                        "One of the products in your cart wasn't found in our database. \
-                        Please call us for assistance!")
-                    )
-                    order.delete()
-                    return redirect(reverse('view_bag'))
+                        order.delete()
+                        return redirect(reverse('view_bag'))
 
-            request.session['save_info'] = 'save-info' in request.POST
-            request.session['marketing'] = 'marketing' in request.POST
-            return redirect(reverse(
-                'checkout_success', args=[order.order_number]))
+                request.session['save_info'] = 'save-info' in request.POST
+                request.session['marketing'] = 'marketing' in request.POST
+                return redirect(reverse(
+                    'checkout_success', args=[order.order_number]))
+
+            else:
+                messages.error(request, 'There was an error with your form. \
+                    Please double check your information.')
+
+        else if 'action' in request.POST:
+
+            cart = request.session.get('cart', {})
+            if not cart:
+                messages.error(request, "There's nothing in your cart at the moment")
+                return redirect(reverse('products'))
+
+            # Reset ca to default false when first load checkout page
+            ca = request.COOKIES.get('ca')
+            response = HttpResponse()
+            response.set_cookie('ca', 'false')
+            print("ca_set", request.COOKIES.get('ca'))
+            current_cart = cart_contents(request)
+            total = current_cart['grand_total']
+            stripe_total = round(total * 100)
+            stripe.api_key = stripe_secret_key
+            intent = stripe.PaymentIntent.create(
+                amount=stripe_total,
+                currency=settings.STRIPE_CURRENCY,
+            )
+
+            # Attempt to prefill the form with any info
+            # the user maintains in their profile
+            if request.user.is_authenticated:
+                try:
+                    profile = UserProfile.objects.get(user=request.user)
+                    marketing_value = profile.marketing
+                    full_name = profile.defaultship_full_name
+                    order_form = OrderForm(initial={
+                        'ship_full_name': profile.defaultship_full_name,
+                        'email': profile.user.email,
+                        'ship_street_address1': profile.defaultship_street_address1,
+                        'ship_street_address2': profile.defaultship_street_address2,
+                        'ship_city': profile.defaultship_city,
+                        'ship_state': profile.defaultship_state,
+                        'ship_zipcode': profile.defaultship_zipcode,
+                        'ship_phone_number': profile.defaultship_phone_number,
+                    })
+                except UserProfile.DoesNotExist:
+                    order_form = OrderForm()
+            else:
+                order_form = OrderForm()
+                marketing_value = "false"
+                full_name = ""
+
+            ship_state = USStateSelect()
+            bill_state = USStateSelect()
+            ship_zipcode = USZipCodeField()
+            bill_zipcode = USZipCodeField()
+
+            if not stripe_public_key:
+                messages.warning(request, 'Stripe public key is missing. \
+                    Did you forget to set it in your environment?')
+
+            template = 'checkout/checkout.html'
+            context = {
+                'order_form': order_form,
+                'stripe_public_key': stripe_public_key,
+                'client_secret': intent.client_secret,
+                'ship_state': ship_state,
+                'bill_state': bill_state,
+                'ship_zipcode': ship_zipcode,
+                'bill_zipcode': bill_zipcode,
+                'marketing': marketing_value,
+                'full_name': full_name,
+            }
+
+            return render(request, template, context)
 
         else:
             messages.error(request, 'There was an error with your form. \
-                Please double check your information.')
+                    Please double check your delivery and shipping information.')
 
-    cart = request.session.get('cart', {})
-    if not cart:
-        messages.error(request, "There's nothing in your cart at the moment")
-        return redirect(reverse('products'))
-
-    # Reset ca to default false when first load checkout page
-    ca = request.COOKIES.get('ca')
-    response = HttpResponse()
-    response.set_cookie('ca', 'false')
-    print("ca_set", request.COOKIES.get('ca'))
-    current_cart = cart_contents(request)
-    total = current_cart['grand_total']
-    stripe_total = round(total * 100)
-    stripe.api_key = stripe_secret_key
-    intent = stripe.PaymentIntent.create(
-        amount=stripe_total,
-        currency=settings.STRIPE_CURRENCY,
-    )
-
-    # Attempt to prefill the form with any info
-    # the user maintains in their profile
-    if request.user.is_authenticated:
-        try:
-            profile = UserProfile.objects.get(user=request.user)
-            marketing_value = profile.marketing
-            full_name = profile.defaultship_full_name
-            order_form = OrderForm(initial={
-                'ship_full_name': profile.defaultship_full_name,
-                'email': profile.user.email,
-                'ship_street_address1': profile.defaultship_street_address1,
-                'ship_street_address2': profile.defaultship_street_address2,
-                'ship_city': profile.defaultship_city,
-                'ship_state': profile.defaultship_state,
-                'ship_zipcode': profile.defaultship_zipcode,
-                'ship_phone_number': profile.defaultship_phone_number,
-            })
-        except UserProfile.DoesNotExist:
-            order_form = OrderForm()
-    else:
-        order_form = OrderForm()
-        marketing_value = "false"
-        full_name = ""
-
-    ship_state = USStateSelect()
-    bill_state = USStateSelect()
-    ship_zipcode = USZipCodeField()
-    bill_zipcode = USZipCodeField()
-
-    if not stripe_public_key:
-        messages.warning(request, 'Stripe public key is missing. \
-            Did you forget to set it in your environment?')
-
-    template = 'checkout/checkout.html'
-    context = {
-        'order_form': order_form,
-        'stripe_public_key': stripe_public_key,
-        'client_secret': intent.client_secret,
-        'ship_state': ship_state,
-        'bill_state': bill_state,
-        'ship_zipcode': ship_zipcode,
-        'bill_zipcode': bill_zipcode,
-        'marketing': marketing_value,
-        'full_name': full_name,
-    }
-
-    return render(request, template, context)
 
 
 def checkout_success(request, order_number):
