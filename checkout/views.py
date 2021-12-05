@@ -65,7 +65,7 @@ def checkout_shipping(request):
     current_cart = cart_contents(request)
     #total = current_cart['grand_total']
 
-    if request.method == 'POST':
+ #   if request.method == 'POST':
         
 
 
@@ -178,7 +178,7 @@ def checkout(request):
                 messages.error(request, 'There was an error with your form. \
                     Please double check your information.')
 
-        else if 'action' in request.POST:
+#        else if 'action' in request.POST:
 
             cart = request.session.get('cart', {})
             if not cart:
@@ -198,6 +198,8 @@ def checkout(request):
                 amount=stripe_total,
                 currency=settings.STRIPE_CURRENCY,
             )
+#Preload shipping and billing fields with info from POST
+
 
             # Attempt to prefill the form with any info
             # the user maintains in their profile

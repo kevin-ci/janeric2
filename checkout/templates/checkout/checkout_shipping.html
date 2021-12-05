@@ -74,17 +74,10 @@
                         <hr class="my-0">
                         <div class="row text-right pt-2">
                             <div class="col-7 offset-2">
-                                <p class="my-0">Order Total:</p>
-                                <p class="my-0">Shipping:</p>
-                                <p class="my-0 d-none" id="taxes-label">Sales Tax:</p>
-                                <p class="my-0 " id="gtotal-label">Grand Total:</p>
+                                <p class="my-0">Order Sub-Total:</p>
                             </div>
                             <div class="col-3">
                                 <p class="my-0">${{ total|intcomma }}</p>
-                                <p class="my-0 text-right">${{ shipping|intcomma }}</p>
-                                <p class="my-0 text-right d-none" id="taxes-amt" value="{{ ca_tax }}">${{ ca_tax|intcomma }}</p>
-                                <p class="my-0 text-right" id="gtotal-amt"><strong>${{ grand_total|intcomma }}</strong></p>
-                                <p class="my-0 d-none text-right" id="gtotal-amt-ca" value="{{ grand_total_ca }}"><strong>${{ grand_total_ca|intcomma }}</strong></p>
                             </div>
                         </div>
                     </div>
