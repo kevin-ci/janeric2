@@ -3,6 +3,7 @@ from django.shortcuts import (
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.conf import settings
+from fedex.config import FedexConfig
 
 from .forms import USZipCodeField, USStateSelect, OrderForm, ShippingForm
 from .models import Order, OrderLineItem
@@ -14,6 +15,9 @@ from cart.contexts import cart_contents
 import stripe
 import json
 
+CONFIG_OBJ = FedexConfig(
+    key=settings.FEDEX_TEST_KEY, password=settings.FEDEX_TEST_PASSWORD,account_number=settings.FEDEX_TEST_ACCT_NUMBER, meter_number=settings.FEDEX_TEST_METER_NUMBER
+    )
 
 @require_POST
 def cache_checkout_data(request):
@@ -55,18 +59,39 @@ def cache_checkout_data(request):
 
 
 def checkout_shipping(request):
-
+    
     #current_cart = cart_contents(request)
     cart = request.session.get('cart', {})
     if not cart:
         messages.error(request, "There's nothing in your cart at the moment")
         return redirect(reverse('products'))
 
-    current_cart = cart_contents(request)
-    #total = current_cart['grand_total']
+    if request.method == "POST":
+        ship_form_data = {
+                'ship_full_name': request.POST['ship_full_name'],
+                'email': request.POST['email'],
+                'ship_comp_name': request.POST['ship_comp_name'],
+                'ship_phone_number': request.POST['ship_phone_number'],
+                'ship_street_address1': request.POST['ship_street_address1'],
+                'ship_street_address2': request.POST['ship_street_address2'],
+                'ship_city': request.POST['ship_city'],
+                'ship_state': request.POST['ship_state'],
+                'ship_zipcode': request.POST['ship_zipcode'],
+                'bill_full_name': request.POST['bill_full_name'],
+                'bill_phone_number': request.POST['bill_phone_number'],
+                'bill_street_address1': request.POST['bill_street_address1'],
+                'bill_street_address2': request.POST['bill_street_address2'],
+                'bill_city': request.POST['bill_city'],
+                'bill_state': request.POST['bill_state'],
+                'bill_zipcode': request.POST['bill_zipcode'],
+        }
 
- #   if request.method == 'POST':
+        # get Product Ids and ship data for each in cart
+        #for product_id in cart.items():
+            
+            
         
+        #rate = FedexRateServiceRequest(CONFIG_OBJ)
 
 
     # Attempt to prefill the form with any info
@@ -117,7 +142,21 @@ def checkout(request):
     ca = request.COOKIES.get('ca')
 
     if request.method == 'POST':
-        if not 'action' in request.POST:
+        if 'action' in request.POST.get:
+            print("action")
+            order_form = OrderForm(initial={
+                'ship_full_name': request.POST.get('ship_full_name'),
+                'email': request.POST.get('email'),
+                'ship_street_address1': request.POST.get('ship_street_address1'),
+                'ship_street_address2': request.POST.get('ship_street_address2'),
+                'ship_city': request.POST.get('ship_city'),
+                'ship_state': request.POST.get('ship_state'),
+                'ship_zipcode': request.POST.get('ship_zipcode'),
+                'ship_phone_number': prequest.POST.get('ship_phone_number'),
+            }) 
+
+        elif not 'action' in request.POST.get:
+            print("not action")
             cart = request.session.get('cart', {})
             form_data = {
                 'ship_full_name': request.POST['ship_full_name'],
@@ -177,8 +216,6 @@ def checkout(request):
             else:
                 messages.error(request, 'There was an error with your form. \
                     Please double check your information.')
-
-#        else if 'action' in request.POST:
 
             cart = request.session.get('cart', {})
             if not cart:

@@ -78,7 +78,7 @@ $(document).ready(function() {
             billPhone.val("");
         }
     });
-
+    //Post to checkout view to load order form
     if(shippingForm) {
 
         shippingForm.addEventListener('submit', function(ev) {
