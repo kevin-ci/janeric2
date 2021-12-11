@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.conf import settings
 from fedex.config import FedexConfig
+from fedex.tools.conversion import sobject_to_dict
 
 from .forms import USZipCodeField, USStateSelect, OrderForm, ShippingForm
 from .models import (
@@ -16,10 +17,14 @@ from cart.contexts import cart_contents
 
 import stripe
 import json
+import logging
+import sys
+
 
 CONFIG_OBJ = FedexConfig(
     key=settings.FEDEX_TEST_KEY, password=settings.FEDEX_TEST_PASSWORD,account_number=settings.FEDEX_TEST_ACCT_NUMBER, meter_number=settings.FEDEX_TEST_METER_NUMBER
     )
+
 
 @require_POST
 def cache_checkout_data(request):
@@ -69,6 +74,7 @@ def checkout_shipping(request):
         return redirect(reverse('products'))
 
     if request.method == "POST":
+        print("form posted")
         ship_form_data = {
                 'ship_full_name': request.POST['ship_full_name'],
                 'email': request.POST['email'],
@@ -87,83 +93,45 @@ def checkout_shipping(request):
                 'bill_state': request.POST['bill_state'],
                 'bill_zipcode': request.POST['bill_zipcode'],
         }
-
+        print(ship_form_data)
+        return redirect(reverse('checkout'))
         # fedex_python API set up
-        rate = FedexRateServiceRequest(CONFIG_OBJ)
+        #rate = FedexRateServiceRequest(CONFIG_OBJ)
 
-        rate.RequestedShipment.DropoffType = "REGULAR_PICKUP"
-        rate.RequestedShipment.ServiceType = 'FEDEX_GROUND'
-        rate.RequestedShipment.PackagingType = 'YOUR_PACKAGING'
+        #rate.RequestedShipment.DropoffType = "REGULAR_PICKUP"
+        #rate.RequestedShipment.ServiceType = 'FEDEX_GROUND'
+        #rate.RequestedShipment.PackagingType = 'YOUR_PACKAGING'
 
         # get Product Ids and ship data for each in cart
-        for product_id in cart.items():
-            product = get_object_or_404(Product, pk=product_id)
-            all_shipping = ProductShippingData.objects.all()
-#working on - check if another package with same ship from address
-            if all_shipping.product.
-            counter = 0
-            product + str(counter) = get_object_or_404(
-                ProductShippingData, pk=product_id
-                )
-            print((product + counter)shipper_address.shipper_state)
-            rate.RequestedShipment.Shipper.Address.StateOrProvinceCode = (product + counter).shipper_address.shipper_state
+        #for product_id in cart.items():
+         #   product_shipping = get_object_or_404(ProductShippingData, pk=product_id)
+           
             # Shipper Address
-            rate.RequestedShipment.Shipper.Address.PostalCode = (product + counter).shipper_address.postal_code
-            rate.RequestedShipment.Shipper.Address.CountryCode = 'US'
+            #rate.RequestedShipment.Shipper.Address.StateOrProvinceCode = product_shipping.shipper_address.shipper_state
+            #rate.RequestedShipment.Shipper.Address.PostalCode = product_shipping.shipper_address.postal_code
+            #rate.RequestedShipment.Shipper.Address.CountryCode = 'US'
             # Recipient Address
-            rate.RequestedShipment.Recipient.Address.StateOrProvinceCode = ship_form_data['ship_state']
-            rate.RequestedShipment.Recipient.Address.PostalCode = ship_form_data['ship_zipcode']
-            rate.RequestedShipment.Recipient.Address.CountryCode = 'US'
+            #rate.RequestedShipment.Recipient.Address.StateOrProvinceCode = ship_form_data['ship_state']
+            #rate.RequestedShipment.Recipient.Address.PostalCode = ship_form_data['ship_zipcode']
+            #rate.RequestedShipment.Recipient.Address.CountryCode = 'US'
 
-            rate.RequestedShipment.EdtRequestType = 'NONE'
-            rate.RequestedShipment.ShippingChargesPayment.PaymentType = 'SENDER'
+            #rate.RequestedShipment.EdtRequestType = 'NONE'
+            #rate.RequestedShipment.ShippingChargesPayment.PaymentType = 'SENDER'
 
             # FedEx package info
-            package+counter+'_'+weight = rate.create_wsdl_object_of_type('Weight')
-            package+counter+'_'+"weight.Value" = (product+counter).product_pkg_weight_lb
+            #package1_weight = rate.create_wsdl_object_of_type('Weight')
+            #package1_weight.Value = product_shipping.product_pkg_weight_lb
+            #package1_weight.Units = "LB"
+            #package1 = rate.create_wsdl_object_of_type('RequestedPackageLineItem')
+            #package1.Weight = package1_weight
+            #package1.PhysicalPackaging = 'BOX'
+            #package1.GroupPackageCount = 1
+            #rate.add_package(package1)
 
-            package+counter="_"+"weight.Units" = "LB"
-            package+counter = rate.create_wsdl_object_of_type('RequestedPackageLineItem')
-            package+counter.PhysicalPackaging = 'BOX'
-            package1.GroupPackageCount = 1
-            rate.add_package(package1)
-
-            rate.send_request
-
-            
-
-
-
-            
-        
-        #FedexRateServiceRequest
-        rate = FedexRateServiceRequest(CONFIG_OBJ)
-
-        rate.RequestedShipment.DropoffType = 'REGULAR_PICKUP'
-        rate.RequestedShipment.ServiceType = 'FEDEX_GROUND'
-        rate.RequestedShipment.PackagingType = 'YOUR_PACKAGING'
-
-        rate.RequestedShipment.Shipper.Address.StateOrProvinceCode = 'SC'
-        rate.RequestedShipment.Shipper.Address.PostalCode = '29631'
-        rate.RequestedShipment.Shipper.Address.CountryCode = 'US'
-
-        rate.RequestedShipment.Recipient.Address.StateOrProvinceCode = 'NC'
-        rate.RequestedShipment.Recipient.Address.PostalCode = '27577'
-        rate.RequestedShipment.Recipient.Address.CountryCode = 'US'
-
-        rate.RequestedShipment.EdtRequestType = 'NONE'
-        rate.RequestedShipment.ShippingChargesPayment.PaymentType = 'SENDER'
-
-        package1_weight = rate.create_wsdl_object_of_type('Weight')
-        package1_weight.Value = 1.0
-        package1_weight.Units = "LB"
-        package1 = rate.create_wsdl_object_of_type('RequestedPackageLineItem')
-        package1.Weight = package1_weight
-        package1.PhysicalPackaging = 'BOX'
-        package1.GroupPackageCount = 1
-        rate.add_package(package1)
-
-        rate.send_request()
+            #rate.send_request()
+            #request_response = rate.response
+            #response_dict = sobject_to_dict(shipment.response)
+            #print(response_dict)
 
 
     # Attempt to prefill the form with any info

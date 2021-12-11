@@ -114,11 +114,11 @@ $(document).ready(function() {
                 'ship_zipcode': fedexZipCode,
                 'action': "fedex_address"
             }
-            var url = '/checkout/checkout_shipping/';
+            var url = '/checkout/payment/';
 
-            $.post(url, postData2, function(data, status) {
-                console.log(`${data} and status is ${status}`);
-            }); 
+            //$.post(url, postData2, function(data, status) {
+            //    console.log(`${data} and status is ${status}`);
+            //}); 
         }); 
     }
 });

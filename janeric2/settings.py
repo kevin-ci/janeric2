@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
+
 from pathlib import Path
 import dj_database_url
 if os.path.exists("env.py"):
@@ -255,4 +256,5 @@ FEDEX_TEST_PASSWORD = os.environ.get("FEDEX_TEST_PASSWORD")
 FEDEX_TEST_ACCT_NUMBER = os.environ.get("FEDEX_TEST_ACCT_NUMBER")
 FEDEX_TEST_METER_NUMBER = os.environ.get("FEDEX_TEST_METER_NUMBER")
 FEDEX_TEST_URL = os.environ.get("FEDEX_TEST_URL")
+
 

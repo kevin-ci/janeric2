@@ -99,7 +99,7 @@
                                 <strong>Payment</strong>
                             </li>
                         </ul>
-                        <form method="POST" id="shipping-form" action="{% url 'checkout' %}">
+                        <form method="POST" id="shipping-form" action="{% url 'checkout_shipping' %}">
                             {% csrf_token %}
                                 <ul class="stepper linear">
                                     <li id="contact" class="step active">
@@ -159,8 +159,10 @@
                                                 </fieldset>
                                                 </div>
                                             </div>
-                                            <div class="submit-button text-right mt-5 mb-2">                 
-                                                <input type="submit" id="submit-ship-button" value="CONTINUE" class="float-right waves-effect waves-dark btn btn-sm bg-ltblue white-text">  
+                                            <div class="step-actions">
+                                                <div class="submit-button text-right mt-5 mb-2">                 
+                                                    <input type="submit" id="submit-ship-button" value="CONTINUE" class="float-right waves-effect waves-dark btn btn-sm bg-ltblue white-text">  
+                                                </div>
                                             </div>
                                         </div>
                                     </li>
